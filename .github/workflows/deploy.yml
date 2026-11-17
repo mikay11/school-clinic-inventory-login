@@ -31,6 +31,41 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: none
+
+      - name: Create server configuration from secrets
+        env:
+          CFG_DB_HOST: ${{ secrets.DB_HOST }}
+          CFG_DB_PORT: ${{ secrets.DB_PORT || '3306' }}
+          CFG_DB_NAME: ${{ secrets.DB_NAME }}
+          CFG_DB_USER: ${{ secrets.DB_USER }}
+          CFG_DB_PASS: ${{ secrets.DB_PASS }}
+          CFG_APP_BASE_URL: ${{ secrets.APP_BASE_URL || '' }}
+          CFG_APP_TIMEZONE: ${{ secrets.APP_TIMEZONE || 'Asia/Manila' }}
+          CFG_MAIL_FROM: ${{ secrets.MAIL_FROM || 'no-reply@school.edu.ph' }}
+          CFG_SESSION_IDLE_MINUTES: ${{ secrets.SESSION_IDLE_MINUTES || '30' }}
+          CFG_APP_DEBUG: ${{ secrets.APP_DEBUG || 'false' }}
+          CFG_SHOW_RESET_LINK: ${{ secrets.SHOW_RESET_LINK || 'false' }}
+        run: |
+          if [ -z "$CFG_DB_HOST" ] || [ -z "$CFG_DB_NAME" ] || [ -z "$CFG_DB_USER" ]; then
+            echo "DB_HOST, DB_NAME and DB_USER secrets are required."
+            exit 1
+          fi
+          php -r '
+          $keys = ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASS", "APP_BASE_URL", "APP_TIMEZONE", "MAIL_FROM", "SESSION_IDLE_MINUTES", "APP_DEBUG", "SHOW_RESET_LINK"];
+          $out = "<?php\ndeclare(strict_types=1);\n\nreturn [\n";
+          foreach ($keys as $key) {
+              $value = getenv("CFG_" . $key);
+              $out .= "    \"" . $key . "\" => " . var_export($value === false ? "" : $value, true) . ",\n";
+          }
+          $out .= "];\n";
+          file_put_contents("config/config.local.php", $out);
+          '
+
       - name: Sync files to hosting
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -49,7 +84,6 @@ jobs:
             **/.github*
             **/.github/**/*
             **/.vscode/**
-            **/config/config.local.php
             **/config/config.local.php.example
             **/*.md
             **/*.sql

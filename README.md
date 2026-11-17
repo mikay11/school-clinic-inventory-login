@@ -41,28 +41,7 @@ Configuration precedence: `config/config.local.php` → environment variables �
 3. In the control panel, open **MySQL Databases**, create a database, and note the database name, username, host, and password.
 4. Open **phpMyAdmin**, select your new database, then import `database.sql`.
    - Before importing, either edit the `CREATE DATABASE` / `USE` lines in `database.sql` to match the database name InfinityFree gave you, or delete those two lines and select the database in phpMyAdmin first.
-5. Using the **Online File Manager**, create `config/config.local.php` with your real credentials:
-
-```php
-<?php
-declare(strict_types=1);
-
-return [
-    'DB_HOST' => 'sqlXXX.infinityfree.com',
-    'DB_PORT' => '3306',
-    'DB_NAME' => 'if0_XXXXXXX_school_clinic',
-    'DB_USER' => 'if0_XXXXXXX',
-    'DB_PASS' => 'your-database-password',
-    'APP_BASE_URL' => 'https://yourname.infinityfreeapp.com',
-    'APP_TIMEZONE' => 'Asia/Manila',
-    'MAIL_FROM' => 'no-reply@school.edu.ph',
-    'SESSION_IDLE_MINUTES' => '30',
-    'APP_DEBUG' => 'false',
-    'SHOW_RESET_LINK' => 'false',
-];
-```
-
-The deploy workflow excludes this file, so your credentials stay on the server.
+5. You do **not** need to create `config/config.local.php` manually. The workflow generates it from the GitHub secrets below at deploy time, so credentials never enter the repository.
 
 ### 2. Find your FTP details
 
@@ -80,6 +59,17 @@ In the GitHub repo: **Settings → Secrets and variables → Actions → New rep
 | `FTP_PORT` | `21` (or the port you were given) |
 | `FTP_PROTOCOL` | `ftp` (use `ftps` only if your account supports it) |
 | `FTP_REMOTE_DIR` | `./` (or your site's remote folder, with a trailing slash) |
+| `DB_HOST` | MySQL hostname from the control panel, e.g. `sql123.infinityfree.com` |
+| `DB_PORT` | `3306` |
+| `DB_NAME` | Database name from InfinityFree, e.g. `if0_12345678_school_clinic` |
+| `DB_USER` | Database username |
+| `DB_PASS` | Database password |
+| `APP_BASE_URL` | `https://yourname.infinityfreeapp.com` |
+| `APP_TIMEZONE` | `Asia/Manila` |
+| `MAIL_FROM` | `no-reply@school.edu.ph` |
+| `SESSION_IDLE_MINUTES` | `30` |
+| `APP_DEBUG` | `false` |
+| `SHOW_RESET_LINK` | `true` (InfinityFree free plan blocks `mail()`, so on-screen recovery links are needed) |
 
 ### 4. Push to deploy
 
