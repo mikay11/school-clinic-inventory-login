@@ -79,16 +79,16 @@ Visit `https://yourname.infinityfreeapp.com` and log in with the default account
 
 ### 5. Add a custom domain later
 
-In InfinityFree: **Domains → Add Domain**, point your domain's `A` record to the IP shown by InfinityFree (or use their nameservers), then set `APP_BASE_URL` in `config/config.local.php` to `https://your-domain.com`. SSL can be enabled from **SSL/TLS**.
+In InfinityFree: **Domains → Add Domain**, point your domain's `A` record to the IP shown by InfinityFree (or use their nameservers), then update the `APP_BASE_URL` GitHub secret to `https://your-domain.com` and re-run the deploy workflow. SSL can be enabled from **SSL/TLS**.
 
 ## Password recovery
 
-The recovery form stores a one-hour token and emails a reset link using PHP `mail()`. On hosts where `mail()` is blocked, set `SHOW_RESET_LINK` to `'true'` temporarily in `config/config.local.php`, request a reset, use the on-screen link, then set it back to `'false'`. Do not leave it enabled on a public site.
+The recovery form stores a one-hour token and emails a reset link using PHP `mail()`. On hosts where `mail()` is blocked, set the `SHOW_RESET_LINK` GitHub secret to `true` temporarily, deploy, request a reset, use the on-screen link, then set it back to `false` and deploy again. Do not leave it enabled on a public site.
 
 ## Security notes
 
 - Change the seeded password immediately.
-- Keep `config/config.local.php` out of git (it is gitignored and excluded from deployment).
+- Keep `config/config.local.php` out of git; the deploy workflow generates it on the server from GitHub secrets.
 - `APP_DEBUG` and `SHOW_RESET_LINK` should stay `false` in production.
 - The `.htaccess` file blocks direct access to configuration and documentation files; if your host rejects any directive, remove that single line rather than the whole file.
 

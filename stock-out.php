@@ -4,14 +4,7 @@ require_once __DIR__ . '/includes/session.php';
 require_auth();
 require_once __DIR__ . '/includes/layout.php';
 require_once __DIR__ . '/config/db.php';
-
-$reasons = [
-    'dispensed' => 'Dispensed to student or staff',
-    'expired' => 'Expired stock disposal',
-    'damaged' => 'Damaged or contaminated',
-    'adjustment' => 'Inventory adjustment',
-    'other' => 'Other',
-];
+require_once __DIR__ . '/config/constants.php';
 
 $errors = [];
 $values = [
@@ -115,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please enter a valid date released.';
     }
 
-    if (!isset($reasons[$values['reason']])) {
+    if (!isset(STOCK_OUT_REASONS[$values['reason']])) {
         $errors[] = 'Please select a reason for the stock-out.';
     }
 
@@ -127,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo = get_db_connection();
             $quantity = (int)$values['quantity'];
-            $reasonLabel = $reasons[$values['reason']];
+            $reasonLabel = STOCK_OUT_REASONS[$values['reason']];
 
             $pdo->beginTransaction();
 
@@ -251,7 +244,7 @@ render_page_start('Stock Out', 'stock-out', $identity['full_name'], unread_notif
               <label for="reason">Reason <span class="req">*</span></label>
               <select id="reason" name="reason" required>
                 <option value="">Select a reason</option>
-                <?php foreach ($reasons as $key => $label): ?>
+                <?php foreach (STOCK_OUT_REASONS as $key => $label): ?>
                   <option value="<?php echo e($key); ?>"<?php echo $values['reason'] === $key ? ' selected' : ''; ?>><?php echo e($label); ?></option>
                 <?php endforeach; ?>
               </select>

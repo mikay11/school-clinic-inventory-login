@@ -4,10 +4,7 @@ require_once __DIR__ . '/includes/session.php';
 require_auth();
 require_once __DIR__ . '/includes/layout.php';
 require_once __DIR__ . '/config/db.php';
-
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
+require_once __DIR__ . '/config/constants.php';
 
 $errors = [];
 $values = [
@@ -23,30 +20,24 @@ $values = [
     'expiration_date' => '',
 ];
 
-$categories = ['Tablet', 'Capsule', 'Syrup', 'Liquid', 'Ointment', 'Other'];
-
-$genericNames = ['Paracetamol', 'Mefenamic Acid', 'Ibuprofen', 'Aspirin', 'Amoxicillin', 'Co-Amoxiclav', 'Doxycycline', 'Cetirizine', 'Loratadine', 'Chlorphenamine', 'Lagundi', 'Carbocisteine', 'Salbutamol', 'Ascorbic Acid', 'Ferrous Sulfate', 'Multivitamins', 'Oral Rehydration Salts', 'Povidone-Iodine', 'Hydrogen Peroxide', 'Simethicone', 'Hyoscine Butylbromide', 'Meclizine', 'Dimenhydrinate', 'Menthol', 'Methyl Salicylate', 'Aluminum Hydroxide', 'Magnesium Hydroxide'];
-
-$medicineNames = ['Biogesic', 'Paracetamol', 'Medicol', 'Tempra', 'Calpol', 'Mefenamic Acid', 'Ibuprofen', 'Aspirin', 'Alaxan', 'Amoxicillin', 'Co-Amoxiclav', 'Doxycycline', 'Cetirizine', 'Loratadine', 'Chlorphenamine', 'Lagundi', 'Solmux', 'Neozep', 'Bioflu', 'Kremil-S', 'Diatabs', 'Hydrite', 'Oral Rehydration Salts', 'Bonamine', 'Buscopan', 'Ambil', 'Multivitamins', 'Ascorbic Acid', 'Ferrous Sulfate', 'Salbutamol', 'Betadine', 'Povidone-Iodine', 'Hydrogen Peroxide', 'Efficascent Oil', 'Katinko'];
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($values as $key => $default) {
         $values[$key] = trim((string)($_POST[$key] ?? $default));
     }
 
-    if (!hash_equals((string)($_SESSION['csrf_token'] ?? ''), (string)($_POST['csrf_token'] ?? ''))) {
+    if (!csrf_valid($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Your session expired. Please submit the form again.';
     }
 
-    if (!in_array($values['name'], $medicineNames, true)) {
+    if (!in_array($values['name'], MEDICINE_NAMES, true)) {
         $errors[] = 'Please select a medicine from the list.';
     }
 
-    if ($values['generic_name'] !== '' && !in_array($values['generic_name'], $genericNames, true)) {
+    if ($values['generic_name'] !== '' && !in_array($values['generic_name'], GENERIC_NAMES, true)) {
         $errors[] = 'Please select a generic name from the list.';
     }
 
-    if (!in_array($values['category'], $categories, true)) {
+    if (!in_array($values['category'], CATEGORIES, true)) {
         $values['category'] = 'Other';
     }
 
@@ -184,7 +175,7 @@ render_page_start('Add Medicine', 'inventory', $identity['full_name'], unread_no
 
       <section class="panel form-panel">
         <form method="POST" novalidate>
-          <input type="hidden" name="csrf_token" value="<?php echo e((string)$_SESSION['csrf_token']); ?>">
+          <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
 
           <h2 class="form-title">Medicine Details</h2>
           <div class="form-grid">
@@ -192,7 +183,7 @@ render_page_start('Add Medicine', 'inventory', $identity['full_name'], unread_no
               <label for="name">Medicine Name <span class="req">*</span></label>
               <select id="name" name="name" required>
                 <option value="" disabled<?php echo $values['name'] === '' ? ' selected' : ''; ?>>Select medicine</option>
-                <?php foreach ($medicineNames as $medicineName): ?>
+                <?php foreach (MEDICINE_NAMES as $medicineName): ?>
                   <option value="<?php echo e($medicineName); ?>"<?php echo $values['name'] === $medicineName ? ' selected' : ''; ?>><?php echo e($medicineName); ?></option>
                 <?php endforeach; ?>
               </select>
@@ -202,7 +193,7 @@ render_page_start('Add Medicine', 'inventory', $identity['full_name'], unread_no
               <label for="generic_name">Generic Name</label>
               <select id="generic_name" name="generic_name">
                 <option value=""<?php echo $values['generic_name'] === '' ? ' selected' : ''; ?>>Select generic name</option>
-                <?php foreach ($genericNames as $genericName): ?>
+                <?php foreach (GENERIC_NAMES as $genericName): ?>
                   <option value="<?php echo e($genericName); ?>"<?php echo $values['generic_name'] === $genericName ? ' selected' : ''; ?>><?php echo e($genericName); ?></option>
                 <?php endforeach; ?>
               </select>
@@ -211,7 +202,7 @@ render_page_start('Add Medicine', 'inventory', $identity['full_name'], unread_no
             <div class="field">
               <label for="category">Category</label>
               <select id="category" name="category">
-                <?php foreach ($categories as $category): ?>
+                <?php foreach (CATEGORIES as $category): ?>
                   <option value="<?php echo e($category); ?>"<?php echo $values['category'] === $category ? ' selected' : ''; ?>><?php echo e($category); ?></option>
                 <?php endforeach; ?>
               </select>
@@ -227,11 +218,9 @@ render_page_start('Add Medicine', 'inventory', $identity['full_name'], unread_no
               <label for="location">Storage Location</label>
               <input type="text" id="location" name="location" list="locationOptions" maxlength="80" placeholder="e.g. Cabinet A" value="<?php echo e($values['location']); ?>">
               <datalist id="locationOptions">
-                <option value="Cabinet A"></option>
-                <option value="Cabinet B"></option>
-                <option value="Cabinet C"></option>
-                <option value="Refrigerator"></option>
-                <option value="Emergency Kit"></option>
+                <?php foreach (STOCK_LOCATIONS as $location): ?>
+                  <option value="<?php echo e($location); ?>"></option>
+                <?php endforeach; ?>
               </datalist>
             </div>
 

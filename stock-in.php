@@ -5,10 +5,6 @@ require_auth();
 require_once __DIR__ . '/includes/layout.php';
 require_once __DIR__ . '/config/db.php';
 
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-
 $errors = [];
 $values = [
     'medicine_name' => '',
@@ -50,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $values[$key] = trim((string)($_POST[$key] ?? $default));
     }
 
-    if (!hash_equals((string)($_SESSION['csrf_token'] ?? ''), (string)($_POST['csrf_token'] ?? ''))) {
+    if (!csrf_valid($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Your session expired. Please submit the form again.';
     }
 
@@ -209,7 +205,7 @@ render_page_start('Stock In', 'stock-in', $identity['full_name'], unread_notific
 
       <section class="panel form-panel">
         <form method="POST" id="stockInForm" novalidate>
-          <input type="hidden" name="csrf_token" value="<?php echo e((string)$_SESSION['csrf_token']); ?>">
+          <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
 
           <h2 class="form-title">Stock-In Details</h2>
           <div class="form-grid">

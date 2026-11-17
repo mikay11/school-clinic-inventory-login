@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/session.php';
 require_auth();
 require_once __DIR__ . '/includes/layout.php';
 require_once __DIR__ . '/config/db.php';
+require_once __DIR__ . '/config/constants.php';
 
 $id = (int)($_REQUEST['id'] ?? 0);
 $medicine = null;
@@ -25,12 +26,6 @@ if (!$medicine && !$errors) {
     exit;
 }
 
-$categories = ['Tablet', 'Capsule', 'Syrup', 'Liquid', 'Ointment', 'Other'];
-
-$genericNames = ['Paracetamol', 'Mefenamic Acid', 'Ibuprofen', 'Aspirin', 'Amoxicillin', 'Co-Amoxiclav', 'Doxycycline', 'Cetirizine', 'Loratadine', 'Chlorphenamine', 'Lagundi', 'Carbocisteine', 'Salbutamol', 'Ascorbic Acid', 'Ferrous Sulfate', 'Multivitamins', 'Oral Rehydration Salts', 'Povidone-Iodine', 'Hydrogen Peroxide', 'Simethicone', 'Hyoscine Butylbromide', 'Meclizine', 'Dimenhydrinate', 'Menthol', 'Methyl Salicylate', 'Aluminum Hydroxide', 'Magnesium Hydroxide'];
-
-$medicineNames = ['Biogesic', 'Paracetamol', 'Medicol', 'Tempra', 'Calpol', 'Mefenamic Acid', 'Ibuprofen', 'Aspirin', 'Alaxan', 'Amoxicillin', 'Co-Amoxiclav', 'Doxycycline', 'Cetirizine', 'Loratadine', 'Chlorphenamine', 'Lagundi', 'Solmux', 'Neozep', 'Bioflu', 'Kremil-S', 'Diatabs', 'Hydrite', 'Oral Rehydration Salts', 'Bonamine', 'Buscopan', 'Ambil', 'Multivitamins', 'Ascorbic Acid', 'Ferrous Sulfate', 'Salbutamol', 'Betadine', 'Povidone-Iodine', 'Hydrogen Peroxide', 'Efficascent Oil', 'Katinko'];
-
 $values = [
     'name' => (string)($medicine['name'] ?? ''),
     'generic_name' => (string)($medicine['generic_name'] ?? ''),
@@ -49,15 +44,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $medicine) {
         $errors[] = 'Your session expired. Please submit the form again.';
     }
 
-    if (!in_array($values['name'], $medicineNames, true)) {
+    if (!in_array($values['name'], MEDICINE_NAMES, true)) {
         $errors[] = 'Please select a medicine from the list.';
     }
 
-    if ($values['generic_name'] !== '' && !in_array($values['generic_name'], $genericNames, true)) {
+    if ($values['generic_name'] !== '' && !in_array($values['generic_name'], GENERIC_NAMES, true)) {
         $errors[] = 'Please select a generic name from the list.';
     }
 
-    if (!in_array($values['category'], $categories, true)) {
+    if (!in_array($values['category'], CATEGORIES, true)) {
         $values['category'] = 'Other';
     }
 
@@ -127,17 +122,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $medicine) {
     $medicine = array_merge($medicine ?? [], $values);
 }
 
-$categoryOptions = $categories;
+$categoryOptions = CATEGORIES;
 if ($values['category'] !== '' && !in_array($values['category'], $categoryOptions, true)) {
     array_unshift($categoryOptions, $values['category']);
 }
 
-$nameOptions = $medicineNames;
+$nameOptions = MEDICINE_NAMES;
 if ($values['name'] !== '' && !in_array($values['name'], $nameOptions, true)) {
     array_unshift($nameOptions, $values['name']);
 }
 
-$genericOptions = $genericNames;
+$genericOptions = GENERIC_NAMES;
 if ($values['generic_name'] !== '' && !in_array($values['generic_name'], $genericOptions, true)) {
     array_unshift($genericOptions, $values['generic_name']);
 }
@@ -209,11 +204,9 @@ render_page_start('Edit Medicine', 'inventory', $identity['full_name'], unread_n
                 <label for="location">Storage Location</label>
                 <input type="text" id="location" name="location" list="locationOptions" maxlength="80" placeholder="e.g. Cabinet A" value="<?php echo e($values['location']); ?>">
                 <datalist id="locationOptions">
-                  <option value="Cabinet A"></option>
-                  <option value="Cabinet B"></option>
-                  <option value="Cabinet C"></option>
-                  <option value="Refrigerator"></option>
-                  <option value="Emergency Kit"></option>
+                  <?php foreach (STOCK_LOCATIONS as $location): ?>
+                    <option value="<?php echo e($location); ?>"></option>
+                  <?php endforeach; ?>
                 </datalist>
               </div>
 

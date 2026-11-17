@@ -1175,7 +1175,6 @@ select:focus {
   color: var(--muted);
 }
 
-/* UI completion: preview banners, notifications, settings */
 .alert.info {
   background: #eaf4f8;
   color: #1d5670;
