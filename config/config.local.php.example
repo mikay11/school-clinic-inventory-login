@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+return [
+    'DB_HOST' => 'sqlXXX.infinityfree.com',
+    'DB_PORT' => '3306',
+    'DB_NAME' => 'if0_XXXXXXX_school_clinic',
+    'DB_USER' => 'if0_XXXXXXX',
+    'DB_PASS' => 'your-database-password',
+    'APP_BASE_URL' => 'https://your-account.infinityfreeapp.com',
+    'APP_TIMEZONE' => 'Asia/Manila',
+    'MAIL_FROM' => 'no-reply@school.edu.ph',
+    'SESSION_IDLE_MINUTES' => '30',
+    'APP_DEBUG' => 'false',
+    'SHOW_RESET_LINK' => 'false',
+];

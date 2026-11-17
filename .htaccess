@@ -1,0 +1,23 @@
+DirectoryIndex index.php
+AddDefaultCharset UTF-8
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+  <FilesMatch "^(config\.php|config\.local\.php|db\.php|session\.php|layout\.php)$">
+    Require all denied
+  </FilesMatch>
+
+  <FilesMatch "\.(sql|md|example|log)$">
+    Require all denied
+  </FilesMatch>
+
+  <FilesMatch "^\.">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|jpg|jpeg|png|gif|svg|webp)$">
+    Header set Cache-Control "public, max-age=86400"
+  </FilesMatch>
+</IfModule>
