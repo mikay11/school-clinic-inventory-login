@@ -84,6 +84,16 @@ render_page_start('Notifications', 'notifications', $identity['full_name'], $unr
             <p>Low stock and expiration alerts will appear here.</p>
           </div>
         <?php else: ?>
+          <style>
+            .notification-menu-wrap { position: relative; margin-left: auto; }
+            .notification-menu-trigger { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+            .notification-menu-trigger:hover, .notification-menu-trigger[aria-expanded="true"] { border-color: var(--border); background: var(--bg); color: var(--teal); }
+            .notification-menu-trigger svg { width: 16px; height: 16px; fill: currentColor; }
+            .notification-menu { position: absolute; right: 0; top: calc(100% + 4px); min-width: 130px; padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); box-shadow: var(--shadow); z-index: 10; }
+            .notification-menu[hidden] { display: none; }
+            .notification-menu .notification-action { margin-top: 0; }
+            .notification-menu .btn { width: 100%; justify-content: center; }
+          </style>
           <ul class="notification-list">
             <?php foreach ($notifications as $notification): ?>
               <li class="notification-item<?php echo (int)$notification['is_read'] === 0 ? ' is-unread' : ''; ?>">
@@ -103,10 +113,56 @@ render_page_start('Notifications', 'notifications', $identity['full_name'], $unr
                 <?php if ((int)$notification['is_read'] === 0): ?>
                   <span class="unread-dot" aria-label="Unread"></span>
                 <?php endif; ?>
+                <div class="notification-menu-wrap">
+                  <button type="button" class="notification-menu-trigger" aria-label="Notification options" aria-haspopup="true" aria-expanded="false">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4"></circle><circle cx="8" cy="8" r="1.4"></circle><circle cx="13" cy="8" r="1.4"></circle></svg>
+                  </button>
+                  <div class="notification-menu" hidden>
+                    <form method="POST" action="delete-notification.php" class="notification-action" onsubmit="return confirm('Delete this notification? This cannot be undone.');">
+                      <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                      <input type="hidden" name="id" value="<?php echo (int)$notification['id']; ?>">
+                      <button type="submit" class="btn btn-sm danger">Delete</button>
+                    </form>
+                  </div>
+                </div>
               </li>
             <?php endforeach; ?>
           </ul>
         <?php endif; ?>
       </section>
+      <script>
+        (function () {
+          var triggers = Array.prototype.slice.call(document.querySelectorAll('.notification-menu-trigger'));
+          var menus = Array.prototype.slice.call(document.querySelectorAll('.notification-menu'));
+
+          function closeMenus() {
+            menus.forEach(function (menu) { menu.hidden = true; });
+            triggers.forEach(function (trigger) { trigger.setAttribute('aria-expanded', 'false'); });
+          }
+
+          triggers.forEach(function (trigger) {
+            trigger.addEventListener('click', function (event) {
+              event.stopPropagation();
+              var menu = trigger.nextElementSibling;
+              var open = menu.hidden;
+              closeMenus();
+              menu.hidden = !open;
+              trigger.setAttribute('aria-expanded', String(open));
+            });
+          });
+
+          document.addEventListener('click', function (event) {
+            if (!event.target.closest('.notification-menu-wrap')) {
+              closeMenus();
+            }
+          });
+
+          document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+              closeMenus();
+            }
+          });
+        })();
+      </script>
     </main>
 <?php render_page_end(); ?>

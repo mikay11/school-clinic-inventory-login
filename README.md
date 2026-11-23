@@ -1,17 +1,16 @@
 # School Clinic Inventory System
 
-A server-rendered PHP 8 + MySQL application for managing school clinic medicines, stock movements, expirations, reports, notifications, and user accounts.
+A React + Vite single-page app with a PHP 8 / MySQL JSON API. It manages school clinic medicines, stock movements, expirations, reports, notifications, and user accounts.
 
 ## Features
 
-- Institutional login (@edu.ph) with password verification, CSRF protection, remember-me, idle timeout, and password recovery
-- Dashboard with stock, low-stock, and expiration summaries plus activity feed
-- Medicine inventory with search, status/category filters, pagination, add/edit/delete
-- Stock In and Stock Out with batch-level quantities, validation, and activity logging
+- Institutional login (`@edu.ph`) with CSRF protection, remember-me, idle timeout, and password recovery
+- Dashboard with stock, low-stock, and expiration summaries plus an activity feed
+- Medicine inventory with search, filters, pagination, add/edit/delete, and batch details
+- Stock In and Stock Out with batch validation and activity logging
 - Expiration monitoring with automatic unread alerts
-- Reports with four report types, date filters, CSV export, and printable output
-- Notifications with mark-as-read actions
-- Persisted clinic settings and account/password management
+- Four report types, date filters, CSV export, and printable output
+- Notifications and account/clinic settings
 
 Default account after importing `database.sql`:
 
@@ -21,85 +20,92 @@ Default account after importing `database.sql`:
 
 Change this password after the first login under **Settings**.
 
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 18, React Router, Vite |
+| Backend | PHP 8.2 JSON API (`api/index.php`) |
+| Database | MySQL / MariaDB |
+| Hosting | Static React build + PHP API on InfinityFree |
+
+Repository layout:
+
+```
+src/             React components, pages, API client, styles
+public/          static files copied into dist/ (SPA .htaccess)
+api/             PHP JSON API, config, includes, legacy PHP pages
+assets/          original logos and legacy CSS/JS
+database.sql     schema, settings, and seed data
+.github/         lint + FTP deploy + GitHub Pages workflows
+CONVERSION.md    step-by-step record of the PHP-to-React conversion
+```
+
 ## Local development
 
-Requirements: PHP 7.4+ (8.x recommended) with `pdo_mysql`, and MySQL 5.7+/MariaDB.
+Requirements: Node 18+, PHP 8.2 with `pdo_mysql`, and MySQL 5.7+/MariaDB.
 
-1. Create a database named `school_clinic_inventory`.
-2. Import `database.sql` (via phpMyAdmin or `mysql -u root -p < database.sql`).
-3. Copy `config/config.local.php.example` to `config/config.local.php` and fill in your DB credentials. This file is gitignored and is never uploaded by the deploy workflow.
-4. Serve the project root, e.g. `php -S localhost:8080`, then open `http://localhost:8080`.
+1. Create a database named `school_clinic_inventory` and import `database.sql`.
+2. Copy `api/config/config.local.php.example` to `api/config/config.local.php` and fill in your DB credentials. This file is gitignored.
+3. Start the API server from the project root: `php -S localhost:8080`.
+4. In another terminal, run `npm install` then `npm run dev`.
+5. Open the Vite URL (usually `http://localhost:5173`). Vite proxies `/api` to `localhost:8080`.
 
-Configuration precedence: `config/config.local.php` → environment variables → built-in defaults. Available keys are listed in `config/config.local.php.example`.
+Production build: `npm run build` → output is in `dist/`.
 
-## Deploy to InfinityFree (free)
+## API routes
 
-### 1. Create the hosting account
+The React app calls `/api/?route=<name>` using JSON and session cookies. Main routes: `session`, `login`, `logout`, `forgot-password`, `reset-password`, `dashboard`, `medicines`, `medicine`, `medicines/bulk-delete`, `stock-options`, `stock-in`, `stock-out`, `expiration`, `reports`, `notifications`, `notifications/read`, `notification/delete`, and `settings`.
 
-1. Sign up at InfinityFree and create a free hosting account/website.
-2. Note your free subdomain (for example `yourname.infinityfreeapp.com`).
-3. In the control panel, open **MySQL Databases**, create a database, and note the database name, username, host, and password.
-4. Open **phpMyAdmin**, select your new database, then import `database.sql`.
-   - Before importing, either edit the `CREATE DATABASE` / `USE` lines in `database.sql` to match the database name InfinityFree gave you, or delete those two lines and select the database in phpMyAdmin first.
-5. You do **not** need to create `config/config.local.php` manually. The workflow generates it from the GitHub secrets below at deploy time, so credentials never enter the repository.
+Every POST/PUT/DELETE includes the CSRF token returned by `session`.
 
-### 2. Find your FTP details
+## Deploy to InfinityFree
 
-In the InfinityFree control panel, open **FTP Accounts** (or **File Manager → FTP Details**). You need the FTP server hostname, username, password, and port (usually 21). The remote root directory is normally `./`; adjust the secret below if your files must go into a subfolder.
-
-### 3. Add GitHub repository secrets
-
-In the GitHub repo: **Settings → Secrets and variables → Actions → New repository secret**.
+1. Create the hosting account, MySQL database, and import `database.sql`.
+2. In the repo, add these secrets under **Settings → Secrets and variables → Actions → New repository secret**:
 
 | Secret | Value |
 | --- | --- |
 | `FTP_SERVER` | FTP hostname from InfinityFree |
 | `FTP_USERNAME` | FTP username |
 | `FTP_PASSWORD` | FTP password |
-| `FTP_PORT` | `21` (or the port you were given) |
-| `FTP_PROTOCOL` | `ftp` (use `ftps` only if your account supports it) |
-| `FTP_REMOTE_DIR` | `./` (or your site's remote folder, with a trailing slash) |
-| `DB_HOST` | MySQL hostname from the control panel, e.g. `sql123.infinityfree.com` |
+| `FTP_PORT` | `21` |
+| `FTP_PROTOCOL` | `ftp` |
+| `FTP_REMOTE_DIR` | `./` (or your remote folder, with a trailing slash) |
+| `DB_HOST` | MySQL hostname, e.g. `sql123.infinityfree.com` |
 | `DB_PORT` | `3306` |
-| `DB_NAME` | Database name from InfinityFree, e.g. `if0_12345678_school_clinic` |
+| `DB_NAME` | Database name from InfinityFree |
 | `DB_USER` | Database username |
 | `DB_PASS` | Database password |
 | `APP_BASE_URL` | `https://yourname.infinityfreeapp.com` |
+| `API_ALLOWED_ORIGIN` | `https://yourname.github.io` (only needed for GitHub Pages) |
 | `APP_TIMEZONE` | `Asia/Manila` |
 | `MAIL_FROM` | `no-reply@school.edu.ph` |
 | `SESSION_IDLE_MINUTES` | `30` |
 | `APP_DEBUG` | `false` |
-| `SHOW_RESET_LINK` | `true` (InfinityFree free plan blocks `mail()`, so on-screen recovery links are needed) |
+| `SHOW_RESET_LINK` | `true` on free hosting (mail is blocked), `false` otherwise |
 
-### 4. Push to deploy
+3. Push to `main`. The workflow lints PHP, builds React, generates `api/config/config.local.php` from secrets, then uploads `dist/` to the web root and `api/` to `/api`.
+4. Visit your site and log in with the default account.
 
-Any push to `main` runs a PHP lint job, then syncs the files to your hosting over FTP. You can also trigger it manually with **Actions → Lint and deploy to InfinityFree → Run workflow**.
+## Deploy the React UI to GitHub Pages
 
-Visit `https://yourname.infinityfreeapp.com` and log in with the default account.
+GitHub Pages can host the React build (it cannot run PHP). A second workflow, `.github/workflows/pages.yml`, builds Vite with hash routing so deep links work without server rewrites.
 
-### 5. Add a custom domain later
+1. In **Settings → Pages → Build and deployment**, set **Source** to **GitHub Actions**.
+2. Add a repository variable **Settings → Secrets and variables → Actions → Variables → New repository variable** named `VITE_API_URL` with your hosted API base, e.g. `https://yourname.infinityfreeapp.com/api/`.
+3. Add the `API_ALLOWED_ORIGIN` secret above with your Pages origin, e.g. `https://yourname.github.io`, then re-run the InfinityFree deploy workflow so the API allows that origin.
+4. Push to `main`. The Pages workflow publishes `dist/` to `https://<username>.github.io/<repo>/`.
 
-In InfinityFree: **Domains → Add Domain**, point your domain's `A` record to the IP shown by InfinityFree (or use their nameservers), then update the `APP_BASE_URL` GitHub secret to `https://your-domain.com` and re-run the deploy workflow. SSL can be enabled from **SSL/TLS**.
+Without `VITE_API_URL`, the Pages build falls back to `/api/` on github.io, so login and data calls will fail. API requests from github.io also depend on third-party cookies being allowed by the browser.
 
 ## Password recovery
 
-The recovery form stores a one-hour token and emails a reset link using PHP `mail()`. On hosts where `mail()` is blocked, set the `SHOW_RESET_LINK` GitHub secret to `true` temporarily, deploy, request a reset, use the on-screen link, then set it back to `false` and deploy again. Do not leave it enabled on a public site.
+The API stores a one-hour token and emails a reset link. On hosts where `mail()` is blocked, set `SHOW_RESET_LINK` to `true`, deploy, request a reset, use the on-screen link, then set it back to `false` and deploy again.
 
 ## Security notes
 
 - Change the seeded password immediately.
-- Keep `config/config.local.php` out of git; the deploy workflow generates it on the server from GitHub secrets.
+- Keep `api/config/config.local.php` out of git; the workflow generates it from secrets.
 - `APP_DEBUG` and `SHOW_RESET_LINK` should stay `false` in production.
-- The `.htaccess` file blocks direct access to configuration and documentation files; if your host rejects any directive, remove that single line rather than the whole file.
-
-## Structure
-
-```
-auth/          login and logout handlers
-config/        configuration and PDO connection
-includes/      session, CSRF, layout, and notification helpers
-assets/        styles, JavaScript, and logos
-*.php          application pages
-database.sql   schema, settings, and seed data
-.github/       lint + FTP deploy workflow
-```
+- `public/.htaccess` provides the SPA fallback; `api/.htaccess` blocks direct access to config files.

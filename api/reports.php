@@ -103,6 +103,7 @@ try {
     } elseif ($reportType === 'movement') {
         $conditions = [];
         $params = [];
+        $conditions[] = 'a.medicine_id IS NOT NULL';
         if ($dateFrom !== '') {
             $conditions[] = 'a.created_at >= :from';
             $params['from'] = $dateFrom . ' 00:00:00';

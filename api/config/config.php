@@ -38,6 +38,9 @@ if (!defined('DB_PASS')) {
 if (!defined('APP_BASE_URL')) {
     define('APP_BASE_URL', rtrim($setting('APP_BASE_URL', ''), '/'));
 }
+if (!defined('API_ALLOWED_ORIGIN')) {
+    define('API_ALLOWED_ORIGIN', $setting('API_ALLOWED_ORIGIN', ''));
+}
 if (!defined('APP_TIMEZONE')) {
     define('APP_TIMEZONE', $setting('APP_TIMEZONE', 'Asia/Manila'));
 }

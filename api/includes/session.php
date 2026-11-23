@@ -6,12 +6,13 @@ require_once __DIR__ . '/../config/config.php';
 if (session_status() === PHP_SESSION_NONE) {
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
         || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $crossOrigin = API_ALLOWED_ORIGIN !== '';
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
-        'secure' => $secure,
+        'secure' => $secure || $crossOrigin,
         'httponly' => true,
-        'samesite' => 'Lax',
+        'samesite' => $crossOrigin ? 'None' : 'Lax',
     ]);
     session_start();
 }

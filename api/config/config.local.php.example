@@ -8,6 +8,7 @@ return [
     'DB_USER' => 'if0_XXXXXXX',
     'DB_PASS' => 'your-database-password',
     'APP_BASE_URL' => 'https://your-account.infinityfreeapp.com',
+    'API_ALLOWED_ORIGIN' => 'https://your-account.github.io',
     'APP_TIMEZONE' => 'Asia/Manila',
     'MAIL_FROM' => 'no-reply@school.edu.ph',
     'SESSION_IDLE_MINUTES' => '30',

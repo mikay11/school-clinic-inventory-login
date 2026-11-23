@@ -1,6 +1,8 @@
-/config/config.local.php
+/node_modules
+/dist
 .env
 *.log
 .DS_Store
 Thumbs.db
 .vscode/
+/api/config/config.local.php

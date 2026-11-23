@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/deleted-data.php';
 
 function e(?string $value): string
 {
@@ -49,6 +50,10 @@ function create_notification(PDO $pdo, string $message, bool $dedupe = true): vo
 {
     $message = mb_substr(trim($message), 0, 255);
     if ($message === '') {
+        return;
+    }
+
+    if (notification_message_suppressed($pdo, $message)) {
         return;
     }
 

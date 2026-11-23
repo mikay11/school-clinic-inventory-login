@@ -87,8 +87,9 @@ try {
     $activities = $pdo->query(
         'SELECT a.activity_type, a.quantity, a.note, a.performed_by, a.created_at, m.name
          FROM inventory_activities a
-         LEFT JOIN medicines m ON m.id = a.medicine_id
-         ORDER BY a.created_at DESC
+          LEFT JOIN medicines m ON m.id = a.medicine_id
+          WHERE a.medicine_id IS NOT NULL
+          ORDER BY a.created_at DESC
          LIMIT 8'
     )->fetchAll();
 

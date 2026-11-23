@@ -27,8 +27,8 @@ try {
         'SELECT a.created_at, a.medicine_id, a.quantity, a.note, a.performed_by, m.name
          FROM inventory_activities a
          LEFT JOIN medicines m ON m.id = a.medicine_id
-         WHERE a.activity_type = \'stock_in\'
-         ORDER BY a.id DESC
+          WHERE a.activity_type = \'stock_in\' AND a.medicine_id IS NOT NULL
+          ORDER BY a.id DESC
          LIMIT 6'
     )->fetchAll();
 } catch (Throwable $exception) {

@@ -1,4 +1,4 @@
-name: Lint and deploy to InfinityFree
+name: Lint, build and deploy React + PHP API to InfinityFree
 
 on:
   push:
@@ -20,16 +20,28 @@ jobs:
           tools: none
 
       - name: Lint all PHP files
-        run: find . -type f -name '*.php' -not -path './config/config.local.php' -print0 | xargs -0 -n1 php -l
+        run: find . -type f -name '*.php' -not -path './api/config/config.local.php' -print0 | xargs -0 -n1 php -l
 
   deploy:
-    name: Deploy over FTP
+    name: Build React and deploy over FTP
     needs: lint
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build React app
+        run: npm run build
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -45,6 +57,7 @@ jobs:
           CFG_DB_USER: ${{ secrets.DB_USER }}
           CFG_DB_PASS: ${{ secrets.DB_PASS }}
           CFG_APP_BASE_URL: ${{ secrets.APP_BASE_URL || '' }}
+          CFG_API_ALLOWED_ORIGIN: ${{ secrets.API_ALLOWED_ORIGIN || '' }}
           CFG_APP_TIMEZONE: ${{ secrets.APP_TIMEZONE || 'Asia/Manila' }}
           CFG_MAIL_FROM: ${{ secrets.MAIL_FROM || 'no-reply@school.edu.ph' }}
           CFG_SESSION_IDLE_MINUTES: ${{ secrets.SESSION_IDLE_MINUTES || '30' }}
@@ -56,17 +69,17 @@ jobs:
             exit 1
           fi
           php -r '
-          $keys = ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASS", "APP_BASE_URL", "APP_TIMEZONE", "MAIL_FROM", "SESSION_IDLE_MINUTES", "APP_DEBUG", "SHOW_RESET_LINK"];
+          $keys = ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASS", "APP_BASE_URL", "API_ALLOWED_ORIGIN", "APP_TIMEZONE", "MAIL_FROM", "SESSION_IDLE_MINUTES", "APP_DEBUG", "SHOW_RESET_LINK"];
           $out = "<?php\ndeclare(strict_types=1);\n\nreturn [\n";
           foreach ($keys as $key) {
               $value = getenv("CFG_" . $key);
               $out .= "    \"" . $key . "\" => " . var_export($value === false ? "" : $value, true) . ",\n";
           }
           $out .= "];\n";
-          file_put_contents("config/config.local.php", $out);
+          file_put_contents("api/config/config.local.php", $out);
           '
 
-      - name: Sync files to hosting
+      - name: Deploy React build to web root
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -75,16 +88,24 @@ jobs:
           port: ${{ secrets.FTP_PORT || '21' }}
           protocol: ${{ secrets.FTP_PROTOCOL || 'ftp' }}
           server-dir: ${{ secrets.FTP_REMOTE_DIR || './' }}
-          local-dir: ./
+          local-dir: ./dist/
+          dangerous-clean-slate: false
+          timeout: 120000
+
+      - name: Deploy PHP API to /api
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || '21' }}
+          protocol: ${{ secrets.FTP_PROTOCOL || 'ftp' }}
+          server-dir: ${{ secrets.FTP_REMOTE_DIR || './' }}api/
+          local-dir: ./api/
           dangerous-clean-slate: false
           timeout: 120000
           exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github*
-            **/.github/**/*
-            **/.vscode/**
-            **/config/config.local.php.example
+            **/config.local.php.example
             **/*.md
             **/*.sql
             **/.gitignore

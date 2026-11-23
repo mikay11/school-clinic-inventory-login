@@ -178,10 +178,31 @@ render_page_start('Medicine Inventory', 'inventory', $identity['full_name'], unr
             <a class="btn" href="medicine-inventory.php">Clear Filters</a>
           </div>
         <?php else: ?>
+          <style>
+            .bulk-delete-bar { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+            .bulk-selected-count { color: var(--muted); font-size: .85rem; }
+            .bulk-select-column { width: 78px; text-align: center; }
+            .bulk-select-label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; }
+            .bulk-medicine-checkbox, .bulk-select-all { width: 16px; height: 16px; accent-color: var(--teal); cursor: pointer; }
+            #bulkDeleteButton:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+          </style>
+
+          <form id="bulk-delete-form" class="bulk-delete-bar" method="POST" action="delete-medicines-bulk.php">
+            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+            <span id="bulkSelectedCount" class="bulk-selected-count">0 selected</span>
+            <button id="bulkDeleteButton" type="submit" class="btn danger" disabled onclick="return confirm('Delete the selected medicines and all of their batches? This cannot be undone.');">Delete Selected</button>
+          </form>
+
           <div class="table-wrap">
             <table class="data inventory-table">
               <thead>
                 <tr>
+                  <th class="bulk-select-column">
+                    <label class="bulk-select-label" title="Select all medicines on this page">
+                      <input type="checkbox" id="bulkSelectAll" form="bulk-delete-form" class="bulk-select-all" aria-label="Select all medicines on this page">
+                      <span>Select all</span>
+                    </label>
+                  </th>
                   <th>Medicine ID</th>
                   <th>Medicine Name</th>
                   <th>Generic Name</th>
@@ -196,6 +217,9 @@ render_page_start('Medicine Inventory', 'inventory', $identity['full_name'], unr
               <tbody>
                 <?php foreach ($pageRows as $medicine): ?>
                   <tr>
+                    <td class="bulk-select-column">
+                      <input type="checkbox" form="bulk-delete-form" name="ids[]" value="<?php echo (int)$medicine['id']; ?>" class="bulk-medicine-checkbox" aria-label="Select <?php echo e($medicine['name']); ?>">
+                    </td>
                     <td class="muted">MED-<?php echo str_pad((string)$medicine['id'], 3, '0', STR_PAD_LEFT); ?></td>
                     <td class="strong"><a class="table-link" href="medicine-view.php?id=<?php echo (int)$medicine['id']; ?>"><?php echo e($medicine['name']); ?></a></td>
                     <td><?php echo $medicine['generic_name'] !== '' ? e($medicine['generic_name']) : '<span class="muted">&mdash;</span>'; ?></td>
@@ -260,6 +284,34 @@ render_page_start('Medicine Inventory', 'inventory', $identity['full_name'], unr
               </nav>
             <?php endif; ?>
           </div>
+
+          <script>
+            (function () {
+              var selectAll = document.getElementById('bulkSelectAll');
+              var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.bulk-medicine-checkbox'));
+              var deleteButton = document.getElementById('bulkDeleteButton');
+              var countLabel = document.getElementById('bulkSelectedCount');
+
+              function refreshBulkState() {
+                var selected = checkboxes.filter(function (checkbox) { return checkbox.checked; }).length;
+                countLabel.textContent = selected + ' selected';
+                deleteButton.disabled = selected === 0;
+                selectAll.checked = selected > 0 && selected === checkboxes.length;
+                selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
+              }
+
+              selectAll.addEventListener('change', function () {
+                checkboxes.forEach(function (checkbox) { checkbox.checked = selectAll.checked; });
+                refreshBulkState();
+              });
+
+              checkboxes.forEach(function (checkbox) {
+                checkbox.addEventListener('change', refreshBulkState);
+              });
+
+              refreshBulkState();
+            })();
+          </script>
         <?php endif; ?>
       </section>
     </main>

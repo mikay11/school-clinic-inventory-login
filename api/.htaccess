@@ -1,0 +1,5 @@
+Options -Indexes
+
+<FilesMatch "^(config\.php|config\.local\.php|db\.php|session\.php|layout\.php|deleted-data\.php|constants\.php)$">
+  Require all denied
+</FilesMatch>

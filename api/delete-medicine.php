@@ -36,6 +36,7 @@ try {
 
         $delete = $pdo->prepare('DELETE FROM medicines WHERE id = :id');
         $delete->execute(['id' => $id]);
+        delete_notifications_mentioning($pdo, (string)$medicine['name']);
 
         $activity = $pdo->prepare(
             'INSERT INTO inventory_activities (activity_type, medicine_id, quantity, note, performed_by)
